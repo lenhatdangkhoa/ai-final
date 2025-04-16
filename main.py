@@ -1,7 +1,12 @@
 import numpy as np
 import random
 import os, time
-width, height = 3, 3  # 5x5 grid
+import pygame
+
+pygame.mixer.init()
+pygame.mixer.music.load("rlgl.mp3")
+pygame.mixer.music.play()  # Loop the music
+width, height =10,10  # 5x5 grid
 goal = {(0 , i) for i in range(width)}
 actions = [0, 1, 2, 3, 4]  # Up, Down, Left, Right, Stay
 
@@ -12,10 +17,10 @@ for x in range(width):
         for light in [0, 1]:
             Q[(x, y, light)] = [0, 0, 0, 0, 0]
 
-alpha = 0.1
+alpha = 0.2
 gamma = 0.9
 epsilon = 0.5
-episodes = 10000
+episodes = 30000
 
 def get_next_state(state, action):
     x, y, light = state
@@ -69,7 +74,7 @@ def print_grid(x, y):
 episode_rewards = []
 #Q-Learning
 for ep in range(episodes):
-    state = (width-1, height-1, np.random.choice([0, 1]))  # Start at (0, 0) with random light
+    state = (width-1, random.randint(0, height - 1), np.random.choice([0, 1]))  # Start at (0, 0) with random light
     done = False
     total_reward = 0
 
@@ -104,7 +109,7 @@ print("Q-Table:")
 for key, value in Q.items():
     print(f"State: {key}, Q-Values: {value}")
 
-def simulate_agent(Q, start=(2,1), max_steps=100, light_duration=3):
+def simulate_agent(Q, start=(width - 1,height - 1), max_steps=100, light_duration=3):
     x, y = start
     light = 0  # Start on green
     steps_since_switch = 0
