@@ -4,11 +4,11 @@ import os, time
 import pygame
 import matplotlib.pyplot as plt
 
-pygame.mixer.init()
-pygame.mixer.music.load("rlgl.mp3")
-pygame.mixer.music.play(-1)
+# pygame.mixer.init()
+# pygame.mixer.music.load("rlgl.mp3")
+# pygame.mixer.music.play(-1)
 
-width, height = 10, 10  # Grid dimensions
+width, height = 30, 30  # Grid dimensions
 goal = {(0, i) for i in range(width)}  # Top row as goal
 
 # 0: Up, 1: Down, 2: Left, 3: Right, 4: Stay
@@ -24,7 +24,7 @@ for x in range(width):
 alpha = 0.2
 gamma = 0.9
 epsilon = 0.1
-episodes = 30000
+episodes = 50000
 
 def get_next_state(state, action):
     x, y, light = state
@@ -110,7 +110,7 @@ def simulate_agent(Q, start=(width - 1, height - 1), max_steps=100, light_durati
     for step in range(max_steps):
         print_grid(x, y)
         print(f"Step {step+1} | Light: {'🟢 Green' if light else '🔴 Red'}")
-        time.sleep(0.5)
+        time.sleep(0.3)
         print(f"Current Position: ({x}, {y})")
         print(f"Current Light: {'Green' if light else 'Red'}")
         print(f"Current Q-Values: {Q[(x, y, light)]}")
@@ -147,9 +147,9 @@ def simulate_agent(Q, start=(width - 1, height - 1), max_steps=100, light_durati
     
 simulate_agent(Q)
 
-plt.plot(episode_rewards)
-plt.xlabel("Episode")
-plt.ylabel("Total Reward")
-plt.title("Q-learning Progress")
-plt.grid(True)
-plt.show()
+# plt.plot(episode_rewards)
+# plt.xlabel("Episode")
+# plt.ylabel("Total Reward")
+# plt.title("Q-learning Progress")
+# plt.grid(True)
+# plt.show()
