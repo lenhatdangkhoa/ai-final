@@ -3,10 +3,10 @@ import random
 import os, time
 import pygame
 
-pygame.mixer.init()
-pygame.mixer.music.load("rlgl.mp3")
-pygame.mixer.music.play()  # Loop the music
-width, height =10,10  # 5x5 grid
+# pygame.mixer.init()
+# pygame.mixer.music.load("rlgl.mp3")
+
+width, height = 20,20  
 goal = {(0 , i) for i in range(width)}
 actions = [0, 1, 2, 3, 4]  # Up, Down, Left, Right, Stay
 
@@ -19,12 +19,13 @@ for x in range(width):
 
 alpha = 0.2
 gamma = 0.9
-epsilon = 0.5
+epsilon = 1.0
+decay_rate = 0.999
 episodes = 30000
 
-def get_next_state(state, action):
-    x, y, light = state
-    next_light = random.choice([0, 1])
+def get_next_state(state, action, light):
+    x, y, _ = state
+    # next_light = random.choice([0, 1])
     
     if action == 0:  # Up
         x = max(0, x - 1)
@@ -35,28 +36,28 @@ def get_next_state(state, action):
     elif action == 3:  # Right
         y = min(height-1, y + 1)
     # Stay does not change position
-    return (x, y, next_light)
+    return (x, y, light)
 
 def get_reward(state, action, next_state):
     x, y, light = state
     next_x, next_y, _ = next_state
 
     if (x, y) == (next_x, next_y) and action != 4:
-        return -1, False  # Hit wall
+        return -2, False  # Hit wall
     
     if light == 0:  # Red light
         if action != 4:
-            return -20, True  # Tried to move
+            return -50, True  # Tried to move
         else:
-            return 1, False  # Stayed on red – neutral reward
+            return 2, False  # Stayed on red – neutral reward
     
     if (next_x, next_y) in goal:
         return 50,True  # Goal reached
     
     if action == 0 and light == 1:
-        return 1,False  # Move up on green
+        return 2,False  # Move up on green
     
-    return -0.5,False  # Time penalty
+    return -2 , False  # Time penalty
 
 def print_grid(x, y):
     for i in range(width):
@@ -73,8 +74,13 @@ def print_grid(x, y):
 
 episode_rewards = []
 #Q-Learning
+
+light = 0
+
 for ep in range(episodes):
-    state = (width-1, random.randint(0, height - 1), np.random.choice([0, 1]))  # Start at (0, 0) with random light
+    steps_since_switch = 0
+    light_duration = 4
+    state = (width-1, random.randint(0, height - 1), light) # Start at (0, 0) with random light
     done = False
     total_reward = 0
 
@@ -84,7 +90,7 @@ for ep in range(episodes):
         else:
             action = np.argmax(Q[state])
         
-        next_state = get_next_state(state, action)
+        next_state = get_next_state(state, action, light)
         reward, terminal = get_reward(state, action, next_state)
         total_reward += reward
 
@@ -96,11 +102,18 @@ for ep in range(episodes):
         Q[state][action] += alpha * (target - Q[state][action])
         #Q[state][action] += alpha * (reward + gamma * max(Q[next_state]) - Q[state][action])
         
+        steps_since_switch += 1
+        if steps_since_switch >= light_duration:
+            light = 1 - light
+            steps_since_switch = 0
         #if (next_state[0], next_state[1]) in goal:
         if terminal:
             done = True
         
         state = next_state
+    
+    epsilon = max(0.05, epsilon * decay_rate)
+
 
         
     episode_rewards.append(total_reward)
@@ -109,18 +122,20 @@ print("Q-Table:")
 for key, value in Q.items():
     print(f"State: {key}, Q-Values: {value}")
 
-def simulate_agent(Q, start=(width - 1,height - 1), max_steps=100, light_duration=3):
+def simulate_agent(Q, start=(width - 1,height - 1), max_steps=100, light_duration=4):
     x, y = start
     light = 0  # Start on green
     steps_since_switch = 0
 
     print("Starting agent simulation...\n")
+    # if not light:
+    #     pygame.mixer.music.play()  # Loop the music
     for step in range(max_steps):
         # Print grid
-        #os.system('cls' if os.name == 'nt' else 'clear')
         print_grid(x, y)
         print(f"Step {step+1} | Light: {'🟢 Green' if light else '🔴 Red'}")
-        time.sleep(0.5)
+        
+        time.sleep(0.3)
         print(f"Current Position: ({x}, {y})")
         print(f"Current Light: {'Green' if light else 'Red'}")
         print(f"Current Q-Values: {Q[(x, y, light)]}")
