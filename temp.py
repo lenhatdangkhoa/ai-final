@@ -1,16 +1,16 @@
 import numpy as np
 import random
-import os, time
+import os, time, copy
 import pygame
 
-# pygame.mixer.init()
-# pygame.mixer.music.load("rlgl.mp3")
-
-width, height = 30,30  
+width, height = 10,10
 goal = {(0 , i) for i in range(width)}
 actions = [0, 1, 2, 3, 4]  # Up, Down, Left, Right, Stay
 
 Q = {}
+Q_10 = {}
+Q_100 = {}
+Q_1000 = {}
 # Initialize Q-Table
 for x in range(width):
     for y in range(height):
@@ -21,7 +21,7 @@ alpha = 0.2
 gamma = 0.9
 epsilon = 1.0
 decay_rate = 0.999
-episodes = 30000
+episodes = 10000
 
 def get_next_state(state, action, light):
     x, y, _ = state
@@ -47,12 +47,12 @@ def get_reward(state, action, next_state):
     
     if light == 0:  # Red light
         if action != 4:
-            return -50, True  # Tried to move
+            return -50, False  # Tried to move
         else:
             return 2, False  # Stayed on red – neutral reward
     
     if (next_x, next_y) in goal:
-        return 50,True  # Goal reached
+        return 50, True  # Goal reached
     
     if action == 0 and light == 1:
         return 2,False  # Move up on green
@@ -75,12 +75,19 @@ def print_grid(x, y):
 episode_rewards = []
 #Q-Learning
 
-light = 0
-
+light = 0  # Start with red light
 for ep in range(episodes):
+    if ep == 10:
+        Q_10 = copy.deepcopy(Q)
+    elif ep == 100:
+        Q_100 = copy.deepcopy(Q)
+    elif ep == 1000:
+        Q_1000 = copy.deepcopy(Q)
+    elif ep == 50000:
+        Q_50000 = copy.deepcopy(Q)
     steps_since_switch = 0
     light_duration = 4
-    state = (width-1, random.randint(0, height - 1), light) # Start at (0, 0) with random light
+    state = (width-1, random.randint(0, height - 1), light)
     done = False
     total_reward = 0
 
@@ -94,7 +101,7 @@ for ep in range(episodes):
         reward, terminal = get_reward(state, action, next_state)
         total_reward += reward
 
-        # Stop value propagation from illegal red moves
+        # Stop value propagation from goal
         target = reward
         if not terminal:
             target += gamma * max(Q[next_state])
@@ -106,23 +113,18 @@ for ep in range(episodes):
         if steps_since_switch >= light_duration:
             light = 1 - light
             steps_since_switch = 0
-        #if (next_state[0], next_state[1]) in goal:
         if terminal:
             done = True
-        
         state = next_state
-    
-    epsilon = max(0.05, epsilon * decay_rate)
+    epsilon = max(0.05, epsilon * decay_rate) # Decay epsilon
 
-
-        
     episode_rewards.append(total_reward)
-print("Training Complete!")
-print("Q-Table:")
-for key, value in Q.items():
-    print(f"State: {key}, Q-Values: {value}")
+# print("Training Complete!")
+# print("Q-Table:")
+# for key, value in Q.items():
+#      print(f"State: {key}, Q-Values: {value}")
 
-def simulate_agent(Q, start=(width - 1,height - 1), max_steps=100, light_duration=4):
+def simulate_agent(Q, start=(width - 1,height // 2), max_steps=100, light_duration=4):
     x, y = start
     light = 0  # Start on green
     steps_since_switch = 0
@@ -172,13 +174,99 @@ def simulate_agent(Q, start=(width - 1,height - 1), max_steps=100, light_duratio
     print("❌ Agent did not reach the goal within max steps.")
 
 # Run the agent after training
-simulate_agent(Q)
+# simulate_agent(Q)
 
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
-plt.plot(episode_rewards)
-plt.xlabel("Episode")
-plt.ylabel("Total Reward")
-plt.title("Total Reward per Episode")
-plt.grid(True)
-plt.show()
+# plt.plot(episode_rewards)
+# plt.xlabel("Episode")
+# plt.ylabel("Total Reward")
+# plt.title("Total Reward per Episode")
+# plt.grid(True)
+# plt.show()
+def simulate_with_gui(Q_table, cell_size, light_duration, max_steps):
+    pygame.init()
+    screen = pygame.display.set_mode((width * cell_size, height * cell_size + 50))
+    pygame.display.set_caption("Red Light Green Light Agent")
+
+    font = pygame.font.SysFont("Arial", 24)
+    clock = pygame.time.Clock()
+
+    x, y = width - 1, height // 2
+    game_light = 0  # 0 = red, 1 = green
+    steps_since_switch = 0
+    robot_img = pygame.image.load("robot.png").convert_alpha()
+    robot_img = pygame.transform.scale(robot_img, (cell_size, cell_size))
+    doll_front = pygame.image.load("doll_look.png").convert_alpha()
+    doll_back = pygame.image.load("doll_away.gif").convert_alpha()
+
+    doll_front = pygame.transform.scale(doll_front, (cell_size * 2, cell_size * 2))
+    doll_back = pygame.transform.scale(doll_back, (cell_size * 2, cell_size * 2))
+
+    running = True
+    step = 0
+    while running and step < max_steps:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+        # --- Update Logic ---
+        state = (x, y, game_light)
+        if np.array(Q_table[state]).std() == 0:
+            action = random.choice(Q_table[state])
+        else:
+            action = np.argmax(Q_table[state])
+        next_x, next_y = x, y
+        if action == 0: next_x = max(0, x - 1)       # Up
+        elif action == 1: next_x = min(width - 1, x + 1)  # Down
+        elif action == 2: next_y = max(0, y - 1)       # Left
+        elif action == 3: next_y = min(height - 1, y + 1) # Right
+        if game_light == 0 and action != 4:
+            print("Moved during red light!")
+
+        x, y = next_x, next_y
+        step += 1
+
+        if (x, y) in goal:
+            print(f"🎉 Agent reached the goal in {step}!")
+            running = False
+
+        # Update traffic light
+        steps_since_switch += 1
+        if steps_since_switch >= light_duration:
+            game_light = 1 - game_light
+            steps_since_switch = 0
+
+        # --- Drawing ---
+        screen.fill((30, 30, 30))
+
+        top_offset = cell_size * 2
+        
+        # Draw grid and goal
+        for i in range(width):
+            for j in range(height):
+                rect = pygame.Rect(j * cell_size, i * cell_size + top_offset, cell_size, cell_size)
+                color = (255, 0, 0) if (i, j) in goal else (255, 255, 255)
+                pygame.draw.rect(screen, color, rect)
+                pygame.draw.rect(screen, (0, 0, 0), rect, 1)
+
+        # Draw agent
+        screen.blit(robot_img, (y * cell_size, x * cell_size + top_offset))
+
+        # Draw light indicator
+        light_text = font.render("RED" if game_light == 0 else "GREEN", True, (255, 255, 255))
+        screen.blit(light_text, (10, height * cell_size + 10))
+        doll_image = doll_front if game_light == 0 else doll_back
+        doll_x = (width * cell_size // 2) - (cell_size)  # Centered horizontally
+        doll_y = cell_size // 2 # Just above the top row
+        screen.blit(doll_image, (doll_x, doll_y))
+        pygame.display.flip()
+        clock.tick(15)  # Slower for visibility
+
+    pygame.quit()
+
+
+simulate_with_gui(Q_10, cell_size=25, light_duration=4, max_steps=10000)
+simulate_with_gui(Q_100, cell_size=25, light_duration=4, max_steps=10000)
+simulate_with_gui(Q_1000, cell_size=25, light_duration=4, max_steps=10000)
+simulate_with_gui(Q, cell_size=25, light_duration=4, max_steps=10000)
