@@ -3,10 +3,17 @@ import random
 import os, time, copy
 import pygame
 
-width, height = 10,10
+width, height = 50,50
 goal = {(0 , i) for i in range(width)}
 actions = [0, 1, 2, 3, 4]  # Up, Down, Left, Right, Stay
-
+obstacles = set()
+for _ in range(max(width, 25)):
+    i = random.randint(0, width - 1)
+    j = random.randint(0, height - 1)
+    pos = (i, j)
+    if pos not in goal:
+        obstacles.add(pos)
+print("Goal positions:", goal)
 Q = {}
 Q_10 = {}
 Q_100 = {}
@@ -35,6 +42,9 @@ def get_next_state(state, action, light):
         y = max(0, y - 1)
     elif action == 3:  # Right
         y = min(height-1, y + 1)
+    
+    if (x, y) in obstacles:
+        return (x, y, light) 
     # Stay does not change position
     return (x, y, light)
 
@@ -53,6 +63,9 @@ def get_reward(state, action, next_state):
     
     if (next_x, next_y) in goal:
         return 50, True  # Goal reached
+
+    if (next_x, next_y) in obstacles:
+        return -20, False # Hit obstacle
     
     if action == 0 and light == 1:
         return 2,False  # Move up on green
@@ -246,7 +259,12 @@ def simulate_with_gui(Q_table, cell_size, light_duration, max_steps):
         for i in range(width):
             for j in range(height):
                 rect = pygame.Rect(j * cell_size, i * cell_size + top_offset, cell_size, cell_size)
-                color = (255, 0, 0) if (i, j) in goal else (255, 255, 255)
+                if (i, j) in obstacles:
+                    color = (0, 0, 255)
+                elif (i, j) in goal:
+                    color = (255, 0, 0)
+                else:
+                    color = (255, 255, 255)
                 pygame.draw.rect(screen, color, rect)
                 pygame.draw.rect(screen, (0, 0, 0), rect, 1)
 
