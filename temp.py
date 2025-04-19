@@ -3,7 +3,7 @@ import random
 import os, time, copy
 import pygame
 
-width, height = 50,50
+width, height = 30,30
 goal = {(0 , i) for i in range(width)}
 actions = [0, 1, 2, 3, 4]  # Up, Down, Left, Right, Stay
 obstacles = set()
@@ -279,7 +279,7 @@ def simulate_with_gui(Q_table, cell_size, light_duration, max_steps):
         doll_y = cell_size // 2 # Just above the top row
         screen.blit(doll_image, (doll_x, doll_y))
         pygame.display.flip()
-        clock.tick(15)  # Slower for visibility
+        clock.tick(2)  # Slower for visibility
 
     pygame.quit()
 
