@@ -4,15 +4,12 @@ import os, time
 import pygame
 import matplotlib.pyplot as plt
 
-# pygame.mixer.init()
-# pygame.mixer.music.load("rlgl.mp3")
-# pygame.mixer.music.play(-1)
 
+    
 width, height = 30, 30  # Grid dimensions
 goal = {(0, i) for i in range(width)}  # Top row as goal
 
 # 0: Up, 1: Down, 2: Left, 3: Right, 4: Stay
-# 5: Top-left, 6: Top-right, 7: Bottom-left, 8: Bottom-right
 actions = [0, 1, 2, 3, 4, 5, 6, 7, 8]
 
 Q = {}
