@@ -65,7 +65,7 @@ def get_reward(state, action, next_state):
         return 50, True  # Goal reached
 
     if (next_x, next_y) in obstacles:
-        return -20, False # Hit obstacle
+        return -2, False # Hit obstacle
     
     if action == 0 and light == 1:
         return 2,False  # Move up on green

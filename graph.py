@@ -41,4 +41,5 @@ plt.grid(True)
 plt.legend()
 
 plt.tight_layout()
+plt.savefig("metrics_plot_no_epsilon_75x75.png")
 plt.show()
