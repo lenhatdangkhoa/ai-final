@@ -1,11 +1,11 @@
 import pygame
 import numpy as np
 import random
-import q_learning as ql
+import q_learning
 
-def simulate_with_gui(Q_table, cell_size, light_duration, max_steps):
+def simulate_with_gui(Q_table, ql, cell_size, light_duration, max_steps):
     pygame.init()
-    screen = pygame.display.set_mode((ql.width * cell_size, ql.height * cell_size + 50))
+    screen = pygame.display.set_mode((ql.width* cell_size, ql.height * cell_size + 50))
     pygame.display.set_caption("Red Light Green Light Agent")
 
     font = pygame.font.SysFont("Arial", 24)
@@ -14,20 +14,16 @@ def simulate_with_gui(Q_table, cell_size, light_duration, max_steps):
     x, y = ql.width - 1, ql.height // 2
     game_light = 0  # 0 = red, 1 = green
     steps_since_switch = 0
-    robot_img = pygame.image.load("robot.png").convert_alpha()
+    robot_img = pygame.image.load("assets/robot.png").convert_alpha()
     robot_img = pygame.transform.scale(robot_img, (cell_size, cell_size))
-    doll_front = pygame.image.load("doll_look.png").convert_alpha()
-    doll_back = pygame.image.load("doll_away.gif").convert_alpha()
+    doll_front = pygame.image.load("assets/doll_look.png").convert_alpha()
+    doll_back = pygame.image.load("assets/doll_away.gif").convert_alpha()
 
     doll_front = pygame.transform.scale(doll_front, (cell_size * 2, cell_size * 2 + 10))
     doll_back = pygame.transform.scale(doll_back, (cell_size * 2, cell_size * 2))
 
     running = True
     step = 0
-    pygame.mixer.init()
-    pygame.mixer.music.load("rlgl.mp3")
-
-    #pygame.mixer.music.play()  # Loop the music
     total_reward = 0
     while running and step < max_steps:
 
@@ -116,8 +112,9 @@ def simulate_with_gui(Q_table, cell_size, light_duration, max_steps):
 
     pygame.quit()
 
-
-# simulate_with_gui(Q_10, cell_size=25, light_duration=4, max_steps=200)
+ql = q_learning.Q_learning(75, 75)
+Q = ql.run(10000)
+simulate_with_gui(Q, ql,cell_size=25, light_duration=4, max_steps=200)
 # # print("Episode 10: " + str(episode_rewards[10]))
 # simulate_with_gui(Q_100, cell_size=25, light_duration=4, max_steps=200)
 # # print("Episode 100: " + str(episode_rewards[100]))
