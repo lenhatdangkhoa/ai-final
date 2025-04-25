@@ -1,7 +1,6 @@
 import numpy as np
 import random
-import copy
-
+import pandas as pd
 
 class Q_learning:
     def __init__(self, width, height):
@@ -131,15 +130,16 @@ class Q_learning:
             red_light_violations.append(red_violations)
             obstacle_hits.append(collisions)
             self.epsilon = max(0.05, self.epsilon * self.decay_rate) # Decay epsilon
+        metrics = pd.DataFrame({
+        "Episode": list(range(episodes)),
+        "Reward": episode_rewards,
+        "Steps": steps_to_goal,
+        "RedLightViolations": red_light_violations,
+        "ObstacleCollisions": obstacle_hits
+    })
+        metrics.to_csv("metrics.csv", index=False)
         return self.Q
-    # import pandas as pd
 
-    # metrics = pd.DataFrame({
-    #     "Episode": list(range(episodes)),
-    #     "Reward": episode_rewards,
-    #     "Steps": steps_to_goal,
-    #     "RedLightViolations": red_light_violations,
-    #     "ObstacleCollisions": obstacle_hits
-    # })
-    # #metrics.to_csv("metrics.csv", index=False)
-    # return Q
+    
+q = Q_learning(50, 50)
+q.run(10000)
