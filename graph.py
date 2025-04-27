@@ -41,5 +41,5 @@ plt.grid(True)
 plt.legend()
 
 plt.tight_layout()
-plt.savefig("metrics_plot_50x50.png")
+plt.savefig("metrics_plot_wo_collision_50x50.png")
 plt.show()
