@@ -118,7 +118,7 @@ def simulate_with_gui(Q_table, ql, cell_size, light_duration, max_steps):
 
 ql = q_learning.Q_learning(25, 25) # Change the size of the grid here
 Q = ql.run(10000) # Change the number of episodes here
-simulate_with_gui(Q, ql,cell_size=25, light_duration=4, max_steps=200)
+simulate_with_gui(Q, ql,cell_size=20, light_duration=4, max_steps=200)
 
 
 
